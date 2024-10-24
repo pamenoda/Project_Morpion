@@ -1,0 +1,71 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+    <h2 id="texte-margin-sidebar">Public games </h2>
+    <hr id="ligne"> 
+    {% if user.is_authenticated %} 
+        <h2 id="form-margin">Your Created Games:</h2>
+        <ul>
+            {% for game in user_created_games %}
+                <!-- Affichez les détails du jeu créé par l'utilisateur -->
+                </br>
+                <div id="game-container">
+                    <article class="media content-section">
+                        <img class="rounded-circle article-img" src="{{ game.creator.profile.image.url }}">
+                        <div class="media-body">
+                            <div class="article-metadata">
+                                {{ game.creator.username }}
+                                <small class="text-muted">{{ game.created_at | date:"F d, Y" }}</small>
+                            </div>
+                            <h2> <a class="article-title" href="{% url 'game-detail' game.id %}">{{ game.title }}</a></h2>
+                            <p class="article-content"> <ol><li>Board Size: {{ game.board_size }} X {{ game.board_size }}  </li><li> Alignment : {{ game.alignment_length }}</li>
+                                <li>Statut : {% if game.public %} Public {% else %} Private {% endif %}</li></ol> </p>
+                        </div>
+                    </article>
+                </div>
+            {% endfor %}
+        </ul>
+
+        
+    
+
+        <h2 id="form-margin">Games List Available :</h2>
+            <ul>
+                {% for game in games %}
+                {% if game not in user_created_games %}
+                    <!-- Affichez les détails du jeu disponible -->
+                    <!-- ... (code d'affichage) ... -->  
+                    {% if game.waiting_for_player %}
+            </br>
+                <div id="game-container">
+                    <article class="media content-section">
+                        <img class="rounded-circle article-img" src="{{ game.creator.profile.image.url }}">
+                        <div class="media-body">
+                            <div class="article-metadata">
+                                {{ game.creator.username }}
+                                <small class="text-muted">{{ game.created_at | date:"F d, Y" }}</small>
+                                
+                                <div> 
+                                {% if game.public %}
+                                    Public game : 
+                                    <a class="btn btn-outline-secondary btn-lg mt-1 mb-1" href="{% url 'join-game' game.id %}"> Join Game </a>
+                                {% else %}
+                                    Private Game : <a class="btn btn-outline-secondary btn-lg mt-1 mb-1" href="{% url 'join-game' game.id %}"> Join Game </a>
+                                </div>
+                                
+                                {% endif %}
+                            </div>
+                            <h2> <a class="article-title" href="">{{ game.title }}</a></h2>
+                            <p class="article-content"> <ol><li>Board Size: {{ game.board_size }} X {{ game.board_size }}  </li><li> Alignment : {{ game.alignment_length }}</li> <li>Statut : {% if game.public %} Public {% else %} Private {% endif %}</li></ol> </p>
+                        </div>
+                    </article>
+                </div>
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+            </ul>
+    {% else %}
+        <h2 id="texte-center-container">Connect you to see the playground ! </h2>
+    {% endif %}
+    
+{% endblock %}

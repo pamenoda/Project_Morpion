@@ -1,0 +1,230 @@
+{% extends "core/base.html" %}
+{% block content %}
+    <style>
+
+        .btn-square 
+        {
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            text-align: center;  
+        }
+        table, #current-turn 
+        {
+            margin-left: 10px;
+        }
+    </style>
+  
+   
+    <h1 id="texte-margin-sidebar"> Board </h1>
+    <hr id="ligne">
+    <h2 class="mb-4" style="margin-left: 10px;"> Player 1 : {{ game.creator.username }} VS  Player 2 :<span id="opponent-username"></span></h2>
+
+    <h3 style="margin-left: 10px;">Welcome to the grid : {{ user }} </h3>
+    <p style="margin-left: 10px;" >The alignement necessary to win is {{ game.alignment_length }}</p>
+    <p><button class="btn btn-danger" style="margin-left: 10px;" onclick="surrenderGame()">Surrender</button></p>
+
+        <table>
+        {% for row in game.get_board %}
+                <tr>
+                {% for symbol in row %}
+                    <td class="btn btn-outline-primary btn-square"  id="cell-{{forloop.parentloop.counter}}-{{forloop.counter}}" 
+                    onclick="tdClick('{{ forloop.parentloop.counter }}', '{{ forloop.counter }}',this)"></td>
+                {% endfor %}
+                </tr>
+        {% endfor %}
+        </table>    
+    <h3 id="current-turn"> Current Turn : <span id="current-player">{{game.current_player}}</span></h3>
+    
+ 
+    <script>
+        // initialisation des variables 
+        var currentPlayer = "{{game.current_player}}";
+        var player1 = "{{ game.creator.username }}";
+        var player2 = "{{ game.opponent.username }}";
+        var gameID = "{{ game.id }}";
+        var length_Board = "{{ game.board_size}}";
+        var winner = null;
+        var surrender = null;
+
+        // fonction tdclick traite le click des td 
+        function tdClick(row,col,cell)
+        {
+                if (cell.innerHTML==='')
+                {
+                    // requete ajax post qui envoi a une view row col et le nom du joueur
+                    $.ajax({
+                        url : "/game/" + gameID + '/board/post-data/',
+                        type : "POST",
+                        data : 
+                        {
+                            'row': row,
+                            'col': col,
+                            'value':currentPlayer,
+                        },
+
+                        success: function (response) 
+                        {
+                            
+                        },
+                        error: function (error) {
+                        // Gérez les erreurs ici
+                        console.log("Erreur de requête AJAX: ", error);
+                        }
+                    })
+                    
+                }  
+            
+        }   
+        // interval qui appelle updatagameboard qui met à jour la vue 
+            setInterval(function(){
+                if (winner == null)
+                {
+                    updateGameBoard();
+                }
+                else
+                {
+                    window.location.href='/'
+                }
+                
+                },500);
+            
+         // fonction qui fait une requete get pour mettre a jour la grille du plateau  
+        function updateGameBoard() 
+        {
+            $.ajax({
+                    url : "/game/" + gameID + '/board/get-board/',
+                    type : "GET",
+                    success: function (response) 
+                    {
+                        if (response.game.winner != null)
+                        {
+                            winner = response.game.winner
+                            surrender = response.game.surrender
+                        }
+                        // on met à jour les données recus par  la bdd7
+                        board = response.game.board
+                        currentPlayer = response.game.activePlayer
+                        symbolCreator = response.game.symbolCreator
+                        symbolOpponent = response.game.symbolOpponent
+                        player2 = response.game.opponent
+                        alignementLength = response.game.alignement
+                        
+                        for (let row = 0; row < response.game.boardSize; row++) 
+                        {
+                            for (let col = 0; col < response.game.boardSize; col++) 
+                            {
+                                var cellId = "#cell-" + (row + 1 ) + "-" + (col + 1 );
+                                if (board[row][col] == player1)
+                                {
+                                    $(cellId).html('<img src="' + symbolCreator + '" />');
+                                }
+                                else if (board[row][col] == player2)
+                                {
+                                    $(cellId).html('<img src="' + symbolOpponent + '" />');
+                                }
+                            }
+                        }
+                        checkWinner(board,response.game.boardSize,player1,player2,alignementLength)
+                       
+
+                        $('#current-player').text(response.game.activePlayer) 
+                        $("#opponent-username").text(response.game.opponent);
+                    },
+                    error: function (error) {
+                    // Gérez les erreurs ici
+                    console.log("Erreur de requête AJAX: ", error);
+                    }
+                })
+        }
+        // vérifie le gagnant et est appelé après la mise a jour de la view
+        function checkWinner(board, size, player1, player2, lengthToWin) 
+        {
+            // Vérification des lignes
+            for (let row = 0; row < size; row++) {
+                let rowValues = board[row].join(''); // on concaténe une ligne en string 
+                // on vérifie si la ligne concaténe contient le nombre de fois nécessaire le nom d'un joueur pour gagner avec la fonction repeat donc d'affilé
+                if (rowValues.includes(player1.repeat(lengthToWin))) {
+                    announceWinner(player1);
+                    return;
+                } else if (rowValues.includes(player2.repeat(lengthToWin))) {
+                    announceWinner(player2);
+                    return;
+                }
+            }
+
+            // Vérification des colonnes meme logique que au dessus 
+            for (let col = 0; col < size; col++) {
+                let colValues = '';
+                for (let row = 0; row < size; row++) {
+                    colValues += board[row][col];
+                }
+                if (colValues.includes(player1.repeat(lengthToWin))) {
+                    announceWinner(player1);
+                    return;
+                } else if (colValues.includes(player2.repeat(lengthToWin))) {  
+                    announceWinner(player2);
+                    return;
+                }
+            }
+
+            // Vérification des diagonales même logique que au dessus
+            let mainDiagonal = '';
+            let antiDiagonal = '';
+            for (let i = 0; i < size; i++) {
+                mainDiagonal += board[i][i];
+                antiDiagonal += board[i][size - i - 1];
+            }
+
+            if (mainDiagonal.includes(player1.repeat(lengthToWin)) || antiDiagonal.includes(player1.repeat(lengthToWin))) {
+                announceWinner(player1);
+                return;
+            } else if (mainDiagonal.includes(player2.repeat(lengthToWin)) || antiDiagonal.includes(player2.repeat(lengthToWin))) {
+                announceWinner(player2);
+                return;
+            }
+        }
+        // fonction qui annonce le gagnant de la partie 
+        function announceWinner(winner) {
+            
+            $.ajax({
+                    url : "/game/" + gameID + '/board/game_finished/',
+                    type : "POST",
+                    success: function (response) 
+                    {
+                        console.log(response)
+                    },
+                    error: function (error) {
+                    // Gérez les erreurs ici
+                    console.log("Erreur de requête AJAX: ", error);
+                    }
+                }) 
+
+            alert("Player " + winner + " wins!");
+            // Vous pouvez ajouter ici d'autres actions à effectuer lorsque le jeu est terminé.
+            window.location.href = '/'; // Redirection vers la page d'accueil, par exemple.
+        }
+
+        // fonction pour abandonner la game appelé lors du clique du bouton surrender
+        function surrenderGame()
+        { 
+            $.ajax({
+                    url : "/game/" + gameID + '/board/surrender_game/',
+                    type : "POST",
+                    success: function (response) 
+                    {
+
+                    },
+                    error: function (error) {
+                    // Gérez les erreurs ici
+                    console.log("Erreur de requête AJAX: ", error);
+                    }
+                })
+                
+        }
+
+        
+    </script>     
+
+
+{% endblock content %}

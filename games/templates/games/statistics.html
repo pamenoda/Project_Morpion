@@ -1,0 +1,102 @@
+{% extends "core/base.html" %}
+
+
+{% block content %}
+<style>
+
+    .chart-container
+    {
+        width: 70%;
+        margin:20px;
+        
+    }
+
+</style>
+
+<h1 id="texte-margin-sidebar"> Activities </h1>
+<hr id="ligne">
+
+
+<div class="chart-container">
+    <canvas id="barCanvas" aria-label="chart" 
+    role="img"></canvas>
+</div>
+
+<h1 id="texte-margin-sidebar"> Ranking </h1>
+<hr id="ligne">
+
+
+<script>
+    //https://www.w3schools.com/ai/ai_chartjs.asp
+    //https://www.youtube.com/watch?v=AB0t-S7h0sM
+
+    
+    const barCanvas = document.getElementById("barCanvas");
+    // Conversion of data into JavaScript objects for use in the chart
+    const dayOfTheMonth = JSON.parse('{{ dayLabels|safe }}');
+    const GamesOfDay = JSON.parse('{{ gamesPlayed|safe }}');
+    
+   // chart = JavaScript library for creating interactive and dynamic charts in web pages.
+    const barChart = new Chart(barCanvas,
+    {
+        type:"bar",
+        data:{
+            labels: dayOfTheMonth,
+            datasets:[{
+                    data: GamesOfDay
+                }]
+        },
+        options:{
+            scales:{
+                y:{
+                    suggestedMax:25,
+                    ticks:{
+                        font:{
+                            size:18
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Games played',
+                        font:{
+                            size:25
+                        }
+                    }
+                },
+                x:{
+                    ticks:{
+                        font:{
+                            size:18
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Day of the month ',
+                        font:{
+                            size:25
+                        }
+                    }
+                }
+                
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Games played every day',
+                },
+                legend: {
+                    display: true,
+                    position : 'right',
+                }
+            }
+        }
+
+    })
+
+
+</script>
+
+
+{% endblock content %}
+
+

@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <h2 id="texte-margin-sidebar">Info of the game </h2>
+    <hr id="ligne"> 
+    <br>
+    <div id="form-margin">
+            {% if object.creator == user %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mt-2" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            <h1> le code d'accès est  :  {{object.code }}  </h1>
+            {% endif %}
+        <article class="media content-section">
+            <img class="rounded-circle article-img" src="{{ object.creator.profile.image.url }}">
+            <div class="media-body">
+                <div class="article-metadata">
+                    {{ object.creator.username }}
+                    <small class="text-muted">{{ object.created_at | date:"F d, Y" }}</small>
+                    {% if object.creator == user %}
+                    <div> 
+                        <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{% url 'game-update' object.id %}"> Update</a>
+                        <a class="btn btn-danger btn-sm mt-1 mb-1" href="{% url 'game-delete' object.id %}"> Delete</a>
+                    {% endif %}
+                    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{% url 'game-board' object.id %}"> Join the board</a>
+                    </div>
+                </div>
+                <h2> Titre : <a class="article-title" href="{% url 'game-detail' game.id %}">{{ game.title }}</a></h2>
+                <p class="article-content"> <ol><li>Board Size: {{ game.board_size }} X {{ game.board_size }}  </li><li> Alignment : {{ game.alignment_length }}</li></ol> </p>
+            </div>
+        </article>
+
+    </div>
+{% endblock %}
